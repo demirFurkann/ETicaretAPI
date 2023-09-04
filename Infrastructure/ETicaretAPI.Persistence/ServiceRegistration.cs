@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using ETicaret.Application.Repositories;
 using ETicaretAPI.Persistence.Repositories;
+using ETicaret.Application.Repositories.ProductImageFile;
 
 namespace ETicaretAPI.Persistence
 {
@@ -22,6 +23,12 @@ namespace ETicaretAPI.Persistence
             services.AddScoped<IProductWriteRepository, ProductWriteRepository>();
             services.AddScoped<IOrderReadRepository, OrderReadRepository>();
             services.AddScoped<IOrderWriteRepository, OrderWriteRepository>();
+            services.AddScoped<IProductImageReadRepository, ProductImageFileReadRepository>();
+            services.AddScoped<IProductImageWriteRepository, ProductImageFileWriteRepository>();
+            services.AddScoped<IFileReadRepository, FileReadRepository>();
+            services.AddScoped<IFileWriteRepository, FileWriteRepository>();
+            services.AddScoped<IInvoiceFileReadRepository, InvoiceFileReadRepository>();
+            services.AddScoped<IInvoiceFileWriteRepository, InvoiceFileWriteRepository>();
         }
     }
 }

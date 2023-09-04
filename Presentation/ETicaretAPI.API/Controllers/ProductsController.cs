@@ -1,4 +1,7 @@
 ﻿using ETicaret.Application.Repositories;
+using ETicaret.Application.Repositories.ProductImageFile;
+using ETicaret.Application.RequestParameters;
+using ETicaret.Application.Services;
 using ETicaret.Application.ViewModels.Products;
 using ETicaretAPI.Domain.Entities;
 using Microsoft.AspNetCore.Http;
@@ -13,17 +16,30 @@ namespace ETicaretAPI.API.Controllers
     {
         readonly private IProductWriteRepository _productWriteRep;
         readonly private IProductReadRepository _productReadRep;
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        readonly IFileService _fileService;
+        readonly IFileWriteRepository _fileWriteRep;
+        readonly IFileReadRepository _fileReadRep;
+        readonly IProductImageReadRepository _productImageReadRep;
+        readonly IProductImageWriteRepository _productImageWriteRep;
+        readonly IInvoiceFileReadRepository _invoiceFileReadRep;
+        readonly IInvoiceFileWriteRepository _invoiceFileWriteRep;
 
-      
-        public ProductsController(IProductWriteRepository productWriteRep, IProductReadRepository productReadRep)
+        public ProductsController(IProductWriteRepository productWriteRep, IProductReadRepository productReadRep, IWebHostEnvironment webHostEnvironment, IFileService fileService, IProductImageWriteRepository productImageWriteRep, IInvoiceFileReadRepository invoiceFileReadRep, IInvoiceFileWriteRepository invoiceFileWriteRep,IFileWriteRepository fileWriteRepository)
         {
             _productWriteRep = productWriteRep;
             _productReadRep = productReadRep;
-           
+            _webHostEnvironment = webHostEnvironment;
+            _fileService = fileService;
+            _productImageWriteRep = productImageWriteRep;
+            _invoiceFileReadRep = invoiceFileReadRep;
+            _invoiceFileWriteRep = invoiceFileWriteRep;
+            _fileWriteRep = fileWriteRepository;
         }
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public async Task<IActionResult> Get([FromQuery] Pagination pagination)
         {
+
             #region Denemeler
             //await _productWriteRep.AddRangeAsync(new()
             //{
@@ -47,24 +63,40 @@ namespace ETicaretAPI.API.Controllers
             //await _orderWriteRep.SaveAsync();
 
             #endregion
+            var totalCount = _productReadRep.GetAll(false).Count();
 
+            var products = _productReadRep.GetAll(false).Skip(pagination.Page * pagination.Size).Take(pagination.Size).Select(x => new
+            {
 
-            return Ok(_productReadRep.GetAll(false));
+                x.ID,
+                x.Name,
+                x.Stock,
+                x.Price,
+                x.CreatedDate,
+                x.UpdateDate
+            });
+
+            return Ok(new
+            {
+                totalCount,
+                products
+            });
 
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
-          return Ok(await _productReadRep.GetByIdAsync(id,false));
+            return Ok(await _productReadRep.GetByIdAsync(id, false));
         }
 
         [HttpPost]
         public async Task<IActionResult> Post(VM_Create_Product model)
         {
+
             await _productWriteRep.AddAsync(new()
             {
-                ProductName = model.Name,
+                Name = model.Name,
                 Price = model.Price,
                 Stock = model.Stock,
             });
@@ -78,7 +110,7 @@ namespace ETicaretAPI.API.Controllers
             Product product = await _productReadRep.GetByIdAsync(model.Id);
 
             product.Stock = model.Stock;
-            product.ProductName=model.Name;
+            product.Name = model.Name;
             product.Price = model.Price;
 
             await _productWriteRep.SaveAsync();
@@ -91,12 +123,49 @@ namespace ETicaretAPI.API.Controllers
         {
             await _productWriteRep.RemoveAsync(id);
             await _productWriteRep.SaveAsync();
-            return Ok();
+            return Ok(new
+            {
+                message = "Silme Başarili!"
+            });
         }
 
+        [HttpPost("[action]")]
+        public async Task<IActionResult> Upload()
+        {
+            var datas = await _fileService.UploadAsync("resource/files", Request.Form.Files);
+            // await _productImageWriteRep.AddRangeAsync(datas.Select(d => new ProductImageFile()
+            //{
+            //    FileName = d.fileName,
+            //    Path = d.path
+            //}).ToList());
+
+            //await _productImageWriteRep.SaveAsync();
+
+            //await _invoiceFileWriteRep.AddRangeAsync(datas.Select(d => new InvoiceFile()
+            //{
+            //    FileName = d.fileName,
+            //    Path = d.path,
+            //    Price = new Random().Next(0, 166)
+
+            //}).ToList()); ;
+
+            //await _invoiceFileWriteRep.SaveAsync();
 
 
+            await _fileWriteRep.AddRangeAsync(datas.Select(d => new ETicaretAPI.Domain.Entities.File()
+            {
+                FileName = d.fileName,
+                Path = d.path,
 
+            }).ToList()); 
+
+            await _fileWriteRep.SaveAsync();
+
+
+            return Ok();
+
+
+        }
 
 
 

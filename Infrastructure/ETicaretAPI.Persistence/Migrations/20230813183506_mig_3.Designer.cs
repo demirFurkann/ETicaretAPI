@@ -3,6 +3,7 @@ using System;
 using ETicaretAPI.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ETicaretAPI.Persistence.Migrations
 {
     [DbContext(typeof(ETicaretAPIDBContext))]
-    partial class ETicaretAPIDBContextModelSnapshot : ModelSnapshot
+    [Migration("20230813183506_mig_3")]
+    partial class mig_3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -43,38 +46,6 @@ namespace ETicaretAPI.Persistence.Migrations
                     b.HasKey("ID");
 
                     b.ToTable("Customers");
-                });
-
-            modelBuilder.Entity("ETicaretAPI.Domain.Entities.File", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ID"));
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Discriminator")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Path")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("ID");
-
-                    b.ToTable("Files");
-
-                    b.HasDiscriminator<string>("Discriminator").HasValue("File");
-
-                    b.UseTphMappingStrategy();
                 });
 
             modelBuilder.Entity("ETicaretAPI.Domain.Entities.Order", b =>
@@ -151,23 +122,6 @@ namespace ETicaretAPI.Persistence.Migrations
                     b.HasIndex("ProductsID");
 
                     b.ToTable("OrderProduct");
-                });
-
-            modelBuilder.Entity("ETicaretAPI.Domain.Entities.InvoiceFile", b =>
-                {
-                    b.HasBaseType("ETicaretAPI.Domain.Entities.File");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("numeric");
-
-                    b.HasDiscriminator().HasValue("InvoiceFile");
-                });
-
-            modelBuilder.Entity("ETicaretAPI.Domain.Entities.ProductImageFile", b =>
-                {
-                    b.HasBaseType("ETicaretAPI.Domain.Entities.File");
-
-                    b.HasDiscriminator().HasValue("ProductImageFile");
                 });
 
             modelBuilder.Entity("ETicaretAPI.Domain.Entities.Order", b =>
