@@ -1,7 +1,8 @@
-﻿using ETicaret.Application.Repositories;
+﻿using ETicaret.Application.Abstractions.Storage;
+using ETicaret.Application.Repositories;
 using ETicaret.Application.Repositories.ProductImageFile;
 using ETicaret.Application.RequestParameters;
-using ETicaret.Application.Services;
+
 using ETicaret.Application.ViewModels.Products;
 using ETicaretAPI.Domain.Entities;
 using Microsoft.AspNetCore.Http;
@@ -17,24 +18,28 @@ namespace ETicaretAPI.API.Controllers
         readonly private IProductWriteRepository _productWriteRep;
         readonly private IProductReadRepository _productReadRep;
         private readonly IWebHostEnvironment _webHostEnvironment;
-        readonly IFileService _fileService;
+
         readonly IFileWriteRepository _fileWriteRep;
         readonly IFileReadRepository _fileReadRep;
         readonly IProductImageReadRepository _productImageReadRep;
         readonly IProductImageWriteRepository _productImageWriteRep;
         readonly IInvoiceFileReadRepository _invoiceFileReadRep;
         readonly IInvoiceFileWriteRepository _invoiceFileWriteRep;
+        readonly IStorageService _storageService;
 
-        public ProductsController(IProductWriteRepository productWriteRep, IProductReadRepository productReadRep, IWebHostEnvironment webHostEnvironment, IFileService fileService, IProductImageWriteRepository productImageWriteRep, IInvoiceFileReadRepository invoiceFileReadRep, IInvoiceFileWriteRepository invoiceFileWriteRep,IFileWriteRepository fileWriteRepository)
+
+
+        public ProductsController(IProductWriteRepository productWriteRep, IProductReadRepository productReadRep, IWebHostEnvironment webHostEnvironment, IProductImageWriteRepository productImageWriteRep, IInvoiceFileReadRepository invoiceFileReadRep, IInvoiceFileWriteRepository invoiceFileWriteRep, IFileWriteRepository fileWriteRepository, IStorageService storageService)
         {
             _productWriteRep = productWriteRep;
             _productReadRep = productReadRep;
             _webHostEnvironment = webHostEnvironment;
-            _fileService = fileService;
+
             _productImageWriteRep = productImageWriteRep;
             _invoiceFileReadRep = invoiceFileReadRep;
             _invoiceFileWriteRep = invoiceFileWriteRep;
             _fileWriteRep = fileWriteRepository;
+            _storageService = storageService;
         }
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] Pagination pagination)
@@ -132,12 +137,16 @@ namespace ETicaretAPI.API.Controllers
         [HttpPost("[action]")]
         public async Task<IActionResult> Upload()
         {
-            var datas = await _fileService.UploadAsync("resource/files", Request.Form.Files);
-            // await _productImageWriteRep.AddRangeAsync(datas.Select(d => new ProductImageFile()
-            //{
-            //    FileName = d.fileName,
-            //    Path = d.path
-            //}).ToList());
+
+            var datas = await _storageService.UploadAsync("resource/files", Request.Form.Files);
+
+            //var datas = await _fileService.UploadAsync("resource/files", Request.Form.Files);
+            await _productImageWriteRep.AddRangeAsync(datas.Select(d => new ProductImageFile()
+            {
+                FileName = d.fileName,
+                Path = d.pathOrContainer,
+                Storage=_storageService.StorageName
+            }).ToList());
 
             //await _productImageWriteRep.SaveAsync();
 
@@ -152,14 +161,14 @@ namespace ETicaretAPI.API.Controllers
             //await _invoiceFileWriteRep.SaveAsync();
 
 
-            await _fileWriteRep.AddRangeAsync(datas.Select(d => new ETicaretAPI.Domain.Entities.File()
-            {
-                FileName = d.fileName,
-                Path = d.path,
+            //await _fileWriteRep.AddRangeAsync(datas.Select(d => new ETicaretAPI.Domain.Entities.File()
+            //{
+            //    FileName = d.fileName,
+            //    Path = d.path,
 
-            }).ToList()); 
+            //}).ToList()); 
 
-            await _fileWriteRep.SaveAsync();
+            //await _fileWriteRep.SaveAsync();
 
 
             return Ok();
